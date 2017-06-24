@@ -1,0 +1,10 @@
+# Please check the first 4 parameters, and adjust them according to your demande
+SAMPLES: [1,4]
+NELSIN: "u11bd@nelstor0.cbu.uib.no:Personal/UiB_Goksoyr_dCod_1_2017/PCLS_BaP-EE2_RNAseq/sample_test/"
+NELSOUT: "u11bd@nelstor0.cbu.uib.no:Personal/UiB_Goksoyr_dCod_1_2017/PCLS_BaP-EE2_RNAseq/newGenome/"
+PATHPREFIX: "PCLS_BaP-EE2_RNAseq/newGenome/" 
+KEY: "../key/u11bd@nelstor0.cbu.uib.no.txt"
+GENOME: "../ref/genome/gadMor2.fasta"
+TRANS: "../ref/trans/Gadus_morhua.gadMor1.cds.all.fa"
+ANNOT: "../ref/annotation/Gadus_morhua.gadMor1.88.gtf"
+NCORE: "10"
