@@ -6,7 +6,7 @@ conditions = ['BaP_low', 'BaP_high', 'EE2_low', 'EE2_high', 'Mix_low', 'Mix_high
 
 rule all:
     input:
-        final = expand(config["PATHPREFIX"] + "countFile/{sample}.countmerged.idx", sample = samples)
+        final = expand(config["PATHPREFIX"] + "DEA/deg_{condition}", condition = conditions)
 
 rule indexTrans:
     input:
@@ -48,7 +48,7 @@ rule sortIndex:
     output:
         sort = config["PATHPREFIX"] + "bamFile/{sample}.sort.bam"
     shell:
-        "samtools sort {input.bam} -o {output.sort} && {config[SAMTOOLS]} index {output.sort}"
+        "samtools sort {input.bam} -o {output.sort} && samtools index {output.sort}"
 
 rule featureCount:
     input:
@@ -112,65 +112,65 @@ rule prepareDEA:
         "sh ../script/remove_zero.sh {input.Mix_low} {output.control_Mix_low} > {output.Mix_low_VS_control} && " 
         "sh ../script/remove_zero.sh {input.Mix_high} {output.control_Mix_high} > {output.Mix_high_VS_control}"
 
-rule DEA:
-    input:
-        BaP_low_VS_control = config["PATHPREFIX"] + "DEA/BaP_low_VS_control",
-        BaP_high_VS_control = config["PATHPREFIX"] + "DEA/BaP_high_VS_control",
-        EE2_low_VS_control = config["PATHPREFIX"] + "DEA/EE2_low_VS_control",
-        EE2_high_VS_control = config["PATHPREFIX"] + "DEA/EE2_high_VS_control",
-        Mix_low_VS_control = config["PATHPREFIX"] + "DEA/Mix_low_VS_control",
-        Mix_high_VS_control = config["PATHPREFIX"] + "DEA/Mix_high_VS_control"        
-    output:
-        dea_BaP_low = config["PATHPREFIX"] + "DEA/dea_BaP_low",
-        dea_BaP_high = config["PATHPREFIX"] + "DEA/dea_BaP_high",
-        dea_EE2_low = config["PATHPREFIX"] + "DEA/dea_EE2_low",
-        dea_EE2_high = config["PATHPREFIX"] + "DEA/dea_EE2_high",
-        dea_Mix_low = config["PATHPREFIX"] + "DEA/dea_Mix_low",
-        dea_Mix_high = config["PATHPREFIX"] + "DEA/dea_Mix_high"
-    shell:
-        "Rscript ../script/DEA.R {input.BaP_low_VS_control} {output.dea_BaP_low} && "
-        "Rscript ../script/DEA.R {input.BaP_high_VS_control} {output.dea_BaP_high} && "
-        "Rscript ../script/DEA.R {input.EE2_low_VS_control} {output.dea_EE2_low} && "
-        "Rscript ../script/DEA.R {input.EE2_high_VS_control} {output.dea_EE2_high} && "
-        "Rscript ../script/DEA.R {input.Mix_low_VS_control} {output.dea_Mix_low} && "
-        "Rscript ../script/DEA.R {input.Mix_high_VS_control} {output.dea_Mix_high}"
+# rule DEA:
+#     input:
+#         BaP_low_VS_control = config["PATHPREFIX"] + "DEA/BaP_low_VS_control",
+#         BaP_high_VS_control = config["PATHPREFIX"] + "DEA/BaP_high_VS_control",
+#         EE2_low_VS_control = config["PATHPREFIX"] + "DEA/EE2_low_VS_control",
+#         EE2_high_VS_control = config["PATHPREFIX"] + "DEA/EE2_high_VS_control",
+#         Mix_low_VS_control = config["PATHPREFIX"] + "DEA/Mix_low_VS_control",
+#         Mix_high_VS_control = config["PATHPREFIX"] + "DEA/Mix_high_VS_control"        
+#     output:
+#         dea_BaP_low = config["PATHPREFIX"] + "DEA/dea_BaP_low",
+#         dea_BaP_high = config["PATHPREFIX"] + "DEA/dea_BaP_high",
+#         dea_EE2_low = config["PATHPREFIX"] + "DEA/dea_EE2_low",
+#         dea_EE2_high = config["PATHPREFIX"] + "DEA/dea_EE2_high",
+#         dea_Mix_low = config["PATHPREFIX"] + "DEA/dea_Mix_low",
+#         dea_Mix_high = config["PATHPREFIX"] + "DEA/dea_Mix_high"
+#     shell:
+#         "Rscript ../script/DEA.R {input.BaP_low_VS_control} {output.dea_BaP_low} && "
+#         "Rscript ../script/DEA.R {input.BaP_high_VS_control} {output.dea_BaP_high} && "
+#         "Rscript ../script/DEA.R {input.EE2_low_VS_control} {output.dea_EE2_low} && "
+#         "Rscript ../script/DEA.R {input.EE2_high_VS_control} {output.dea_EE2_high} && "
+#         "Rscript ../script/DEA.R {input.Mix_low_VS_control} {output.dea_Mix_low} && "
+#         "Rscript ../script/DEA.R {input.Mix_high_VS_control} {output.dea_Mix_high}"
 
-#rule DEA_new:
-#    input:
-#        expand(config["PATHPREFIX"] + "DEA/{condition}_VS_control", condition = conditions)
-#    output:
-#        config["PATHPREFIX"] + "DEA/dea_{wildcards.condition}.csv"
-#    shell:
-#        "Rscript ../script/DEA.R {input} {output}"
+rule DEA_new:
+   input:
+       expand(config["PATHPREFIX"] + "DEA/{condition}_VS_control", condition = conditions)
+   output:
+       config["PATHPREFIX"] + "DEA/dea_{wildcards.condition}.csv"
+   shell:
+       "Rscript ../script/DEA.R {input} {output}"
 
-rule extractDEG:
-    input:
-        dea_BaP_low = config["PATHPREFIX"] + "DEA/dea_BaP_low",
-        dea_BaP_high = config["PATHPREFIX"] + "DEA/dea_BaP_high",
-        dea_EE2_low = config["PATHPREFIX"] + "DEA/dea_EE2_low",
-        dea_EE2_high = config["PATHPREFIX"] + "DEA/dea_EE2_high",
-        dea_Mix_low = config["PATHPREFIX"] + "DEA/dea_Mix_low",
-        dea_Mix_high = config["PATHPREFIX"] + "DEA/dea_Mix_high"
-    output:
-        deg_BaP_low = config["PATHPREFIX"] + "DEA/deg_BaP_low",
-        deg_BaP_high = config["PATHPREFIX"] + "DEA/deg_BaP_high",
-        deg_EE2_low = config["PATHPREFIX"] + "DEA/deg_EE2_low",
-        deg_EE2_high = config["PATHPREFIX"] + "DEA/deg_EE2_high",
-        deg_Mix_low = config["PATHPREFIX"] + "DEA/deg_Mix_low",
-        deg_Mix_high = config["PATHPREFIX"] + "DEA/deg_Mix_high"
-    shell:
-        "sh ../script/extractDEG.sh {input.dea_BaP_low} > {output.deg_BaP_low} && "
-        "sh ../script/extractDEG.sh {input.dea_BaP_high} > {output.deg_BaP_high} && "
-        "sh ../script/extractDEG.sh {input.dea_EE2_low} > {output.deg_EE2_low} && "
-        "sh ../script/extractDEG.sh {input.dea_EE2_high} > {output.deg_EE2_high} && "
-        "sh ../script/extractDEG.sh {input.dea_Mix_low} > {output.deg_Mix_low} && "
-        "sh ../script/extractDEG.sh {input.dea_Mix_high} > {output.deg_Mix_high}"
+# rule extractDEG:
+#     input:
+#         dea_BaP_low = config["PATHPREFIX"] + "DEA/dea_BaP_low",
+#         dea_BaP_high = config["PATHPREFIX"] + "DEA/dea_BaP_high",
+#         dea_EE2_low = config["PATHPREFIX"] + "DEA/dea_EE2_low",
+#         dea_EE2_high = config["PATHPREFIX"] + "DEA/dea_EE2_high",
+#         dea_Mix_low = config["PATHPREFIX"] + "DEA/dea_Mix_low",
+#         dea_Mix_high = config["PATHPREFIX"] + "DEA/dea_Mix_high"
+#     output:
+#         deg_BaP_low = config["PATHPREFIX"] + "DEA/deg_BaP_low",
+#         deg_BaP_high = config["PATHPREFIX"] + "DEA/deg_BaP_high",
+#         deg_EE2_low = config["PATHPREFIX"] + "DEA/deg_EE2_low",
+#         deg_EE2_high = config["PATHPREFIX"] + "DEA/deg_EE2_high",
+#         deg_Mix_low = config["PATHPREFIX"] + "DEA/deg_Mix_low",
+#         deg_Mix_high = config["PATHPREFIX"] + "DEA/deg_Mix_high"
+#     shell:
+#         "sh ../script/extractDEG.sh {input.dea_BaP_low} > {output.deg_BaP_low} && "
+#         "sh ../script/extractDEG.sh {input.dea_BaP_high} > {output.deg_BaP_high} && "
+#         "sh ../script/extractDEG.sh {input.dea_EE2_low} > {output.deg_EE2_low} && "
+#         "sh ../script/extractDEG.sh {input.dea_EE2_high} > {output.deg_EE2_high} && "
+#         "sh ../script/extractDEG.sh {input.dea_Mix_low} > {output.deg_Mix_low} && "
+#         "sh ../script/extractDEG.sh {input.dea_Mix_high} > {output.deg_Mix_high}"
 
-#rule extractDEG_new:
-#    input:
-#        dea = config["PATHPREFIX"] + "DEA/dea_{condition}"
-#    output:
-#        deg = config["PATHPREFIX"] + "DEA/deg_{condition}"
-#    shell:
-#        "sh ../script/extractDEG.sh {input.dea} > {output.deg}"
+rule extractDEG_new:
+   input:
+       dea = config["PATHPREFIX"] + "DEA/dea_{condition}"
+   output:
+       deg = config["PATHPREFIX"] + "DEA/deg_{condition}"
+   shell:
+       "sh ../script/extractDEG.sh {input.dea} > {output.deg}"
 
