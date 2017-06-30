@@ -44,7 +44,7 @@ rule alignment:
 
 rule sortIndex:
     input:
-        bam = config["PATHPREFIX"] + "bamFile/{sample,\d}.bam"
+        bam = config["PATHPREFIX"] + "bamFile/{sample}.bam"
     output:
         sort = config["PATHPREFIX"] + "bamFile/{sample}.sort.bam"
     shell:
