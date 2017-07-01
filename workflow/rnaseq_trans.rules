@@ -137,9 +137,9 @@ rule prepareDEA:
 
 rule DEA_new:
    input:
-       expand(config["PATHPREFIX"] + "DEA/{condition}_VS_control", condition = conditions)
+       config["PATHPREFIX"] + "DEA/{condition}_VS_control"
    output:
-       config["PATHPREFIX"] + "DEA/dea_{wildcards.condition}.csv"
+       config["PATHPREFIX"] + "DEA/dea_{condition}"
    shell:
        "Rscript ../script/DEA.R {input} {output}"
 
