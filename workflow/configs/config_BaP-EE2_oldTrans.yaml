@@ -1,7 +1,7 @@
 # Please check the first 4 parameters, and adjust them according to your demande
-NELSIN: "u11bd@nelstor0.cbu.uib.no:Personal/UiB_Goksoyr_dCod_1_2017/PCLS_BaP-EE2_RNAseq/sample_test/"
+NELSIN: "u11bd@nelstor0.cbu.uib.no:Projects/UiB_Goksoyr_dCod_1_2017/PCLS_BaP-EE2_RNAseq"
 NELSOUT: "u11bd@nelstor0.cbu.uib.no:Personal/UiB_Goksoyr_dCod_1_2017/PCLS_BaP-EE2_RNAseq/oldTrans/"
-PATHPREFIX: "PCLS_BaP-EE2_RNAseq/oldTrans/" 
+PATHPREFIX: "PCLS_BaP-EE2_RNAseq/oldTrans/"
 KEY: "../key/u11bd@nelstor0.cbu.uib.no.txt"
 GENOME: "../ref/genome/gadMor2.fasta"
 TRANS: "../ref/trans/Gadus_morhua.gadMor1.cds.all.fa"
