@@ -22,17 +22,17 @@ rule getReads:
     input:
         key = config["KEY"]
     output:
-        forward = temp(config["PATHPREFIX"] + "reads/{sample}_forward.fastq"),
-        reverse = temp(config["PATHPREFIX"] + "reads/{sample}_reverse.fastq")
+        forward = temp(config["PATHPREFIX"] + "reads/{sample}_forward.fastq.gz"),
+        reverse = temp(config["PATHPREFIX"] + "reads/{sample}_reverse.fastq.gz")
     run:
-        shell("scp -i {input.key} {config[NELSIN]}/{wildcards.sample}_S*_R1_001.fastq {output.forward}")
-        shell("scp -i {input.key} {config[NELSIN]}/{wildcards.sample}_S*_R2_001.fastq {output.reverse}")
+        shell("scp -i {input.key} {config[NELSIN]}/{wildcards.sample}_S*_R1_001.fastq.gz {output.forward}")
+        shell("scp -i {input.key} {config[NELSIN]}/{wildcards.sample}_S*_R2_001.fastq.gz {output.reverse}")
 
 rule alignment:
     input:
         index = config["PATHPREFIX"] + "indexes/index.1.ht2",
-        forward = config["PATHPREFIX"] + "reads/{sample}_forward.fastq",
-        reverse = config["PATHPREFIX"] + "reads/{sample}_reverse.fastq"
+        forward = config["PATHPREFIX"] + "reads/{sample}_forward.fastq.gz",
+        reverse = config["PATHPREFIX"] + "reads/{sample}_reverse.fastq.gz"
     output:
         sam = config["PATHPREFIX"] + "samFile/{sample}.sam",
         bam = config["PATHPREFIX"] + "bamFile/{sample,\d}.bam"
@@ -60,15 +60,16 @@ rule featureCount:
 
 rule mergeTransGene:
     input:
-        transCount = "../workflow/PCLS_BaP-EE2_RNAseq/oldTrans/countFile/{sample}.count"
+        transCount = config["PATHPREFIX"] + "countFile/{sample}.count"
     output:
         geneCount = config["PATHPREFIX"] + "countFile/{sample}.countmerged.idx"
     shell:
-        "cd ../script/ && javac -cp opencsv-1.8.jar:. sumgenescod.java && java -cp opencsv-1.8.jar:. sumgenescod codgenelist.csv {input}"
+        "cd ../script/ && javac -cp opencsv-1.8.jar:. sumgenescod.java && java -cp opencsv-1.8.jar:. sumgenescod codgenelist.csv ../workflow/{input}"
 
 # The rule below is not flexibal, needs to change manually, the used script combine.sh is only suitable for BaP_EE2
 rule combineSamples:
     input:
+        geneCount = config["PATHPREFIX"] + "countFile/1.countmerged.idx"
     output:
         expand(config["PATHPREFIX"] + "countFile/{group}.countmerged.idx", group = groups)
     params:
@@ -135,7 +136,7 @@ rule prepareDEA:
 #         "Rscript ../script/DEA.R {input.Mix_low_VS_control} {output.dea_Mix_low} && "
 #         "Rscript ../script/DEA.R {input.Mix_high_VS_control} {output.dea_Mix_high}"
 
-rule DEA_new:
+rule DEA:
    input:
        config["PATHPREFIX"] + "DEA/{condition}_VS_control"
    output:
@@ -166,7 +167,7 @@ rule DEA_new:
 #         "sh ../script/extractDEG.sh {input.dea_Mix_low} > {output.deg_Mix_low} && "
 #         "sh ../script/extractDEG.sh {input.dea_Mix_high} > {output.deg_Mix_high}"
 
-rule extractDEG_new:
+rule extractDEG:
    input:
        dea = config["PATHPREFIX"] + "DEA/dea_{condition}"
    output:
