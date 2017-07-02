@@ -1,6 +1,7 @@
 configfile: "./configs/config_BaP-EE2_oldTrans.yaml"
 
 samples = list(range(1, 51))
+indexes = list(range(1, 9))
 groups = ['control', 'BaP_low', 'BaP_high', 'EE2_low', 'EE2_high', 'Mix_low', 'Mix_high']
 conditions = ['BaP_low', 'BaP_high', 'EE2_low', 'EE2_high', 'Mix_low', 'Mix_high']
 
@@ -12,7 +13,7 @@ rule indexTrans:
     input:
         trans = config["TRANS"]
     output:
-        indexes = config["PATHPREFIX"] + "indexes/index.1.ht2"
+        indexes = expand(config["PATHPREFIX"] + "indexes/index.{index}.ht2", index = indexes)
     params:
         index = config["PATHPREFIX"] + "indexes/index"
     shell:
@@ -30,7 +31,7 @@ rule getReads:
 
 rule alignment:
     input:
-        index = config["PATHPREFIX"] + "indexes/index.1.ht2",
+        index = expand(config["PATHPREFIX"] + "indexes/index.{index}.ht2", index = indexes)
         forward = config["PATHPREFIX"] + "reads/{sample}_forward.fastq.gz",
         reverse = config["PATHPREFIX"] + "reads/{sample}_reverse.fastq.gz"
     output:
@@ -69,7 +70,7 @@ rule mergeTransGene:
 # The rule below is not flexibal, needs to change manually, the used script combine.sh is only suitable for BaP_EE2
 rule combineSamples:
     input:
-        geneCount = config["PATHPREFIX"] + "countFile/1.countmerged.idx"
+        geneCount = expand(config["PATHPREFIX"] + "countFile/{sample}.countmerged.idx", sample = samples)
     output:
         expand(config["PATHPREFIX"] + "countFile/{group}.countmerged.idx", group = groups)
     params:
