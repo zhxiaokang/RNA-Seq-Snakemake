@@ -39,6 +39,8 @@ rule alignment:
         bam = config["PATHPREFIX"] + "bamFile/{sample,\d}.bam"
     params:
         index = config["PATHPREFIX"] + "indexes/index"
+    benchmark:
+        config["PATHPREFIX"] + "benchmarks/{sample,\d}.hisat2.benchmark.txt"
     shell:
         "hisat2 -p {config[NCORE]} -x {params.index} -1 {input.forward} -2 {input.reverse} -S {output.sam}"
         " && samtools view -b -S {output.sam} > {output.bam}"
