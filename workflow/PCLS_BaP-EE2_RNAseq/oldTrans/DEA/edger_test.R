@@ -6,7 +6,7 @@ library(statmod)
 # countTable <- read.table(args[1], header = T)
 
 
-countTable <- read.table('./Mix_high_VS_control', header = T)
+countTable <- read.table('./EE2_low_VS_control', header = T)
 rownames(countTable) <- countTable[,1]
 countData <- countTable[,-1] # remove Gene_id column to get pure count table
 
@@ -67,3 +67,5 @@ de <- decideTestsDGE(lrt, adjust.method="BH", p.value = 0.05)
 toptag <- topTags(lrt, n = length(geneList), p.value = 0.05)
 deg <- rownames(toptag$table)
 
+# save the DEGs to file
+write.csv(deg, 'deg_EE2_low_edgeR')
