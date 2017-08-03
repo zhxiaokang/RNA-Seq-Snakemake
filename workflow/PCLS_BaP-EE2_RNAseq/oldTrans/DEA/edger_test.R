@@ -6,7 +6,7 @@ library(statmod)
 # countTable <- read.table(args[1], header = T)
 
 
-countTable <- read.table('./EE2_low_VS_control', header = T)
+countTable <- read.table('./Mix_low_VS_control', header = T)
 rownames(countTable) <- countTable[,1]
 countData <- countTable[,-1] # remove Gene_id column to get pure count table
 
@@ -65,7 +65,7 @@ lrt <- glmLRT(fit)
 # differentially expressed genes
 de <- decideTestsDGE(lrt, adjust.method="BH", p.value = 0.05)
 toptag <- topTags(lrt, n = length(geneList), p.value = 0.05)
-deg <- rownames(toptag$table)
+deg <- toptag$table
 
 # save the DEGs to file
-write.csv(deg, 'deg_EE2_low_edgeR')
+write.csv(deg, 'deg_Mix_low_edgeR')
