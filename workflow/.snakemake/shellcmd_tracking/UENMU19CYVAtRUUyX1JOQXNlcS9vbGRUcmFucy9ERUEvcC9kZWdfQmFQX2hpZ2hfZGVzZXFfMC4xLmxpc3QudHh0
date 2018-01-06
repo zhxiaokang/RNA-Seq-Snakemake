@@ -1,0 +1,1 @@
+sh ../script/extractDEG_List.sh PCLS_BaP-EE2_RNAseq/oldTrans/DEA/dea_BaP_high > PCLS_BaP-EE2_RNAseq/oldTrans/DEA/p/deg_BaP_high_deseq_0.1.list.txt

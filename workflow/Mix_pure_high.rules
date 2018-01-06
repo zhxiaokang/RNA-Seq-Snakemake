@@ -1,0 +1,44 @@
+configfile: "./configs/config_BaP-EE2_oldTrans.yaml"
+
+samples = list(range(1, 7))
+indexes = list(range(1, 9))
+groups = ['control', 'BaP_low', 'BaP_high', 'EE2_low', 'EE2_high', 'Mix_low', 'Mix_high']
+conditions = ['BaP_low', 'BaP_high', 'EE2_low', 'EE2_high', 'Mix_low', 'Mix_high']
+threds = [10, 25, 50]
+
+rule all:
+    input:
+        final = expand(config["PATHPREFIX"] + "DEA/deg_Mix_high_VS_EE2_high.csv")
+               
+
+rule prepareDEA:
+    input:
+        BaP_high = config["PATHPREFIX"] + "countFile/BaP_high.countmerged.idx",
+        EE2_high = config["PATHPREFIX"] + "countFile/EE2_high.countmerged.idx",
+        Mix_high = config["PATHPREFIX"] + "countFile/Mix_high.countmerged.idx"
+    output:
+        Mix_high_for_BaP_high = config["PATHPREFIX"] + "DEA/Mix_high_for_BaP_high",
+        BaP_high_for_Mix_high = config["PATHPREFIX"] + "DEA/BaP_high_for_Mix_high",
+        Mix_high_for_EE2_high = config["PATHPREFIX"] + "DEA/Mix_high_for_EE2_high",
+        EE2_high_for_Mix_high = config["PATHPREFIX"] + "DEA/EE2_high_for_Mix_high",
+        Mix_high_VS_BaP_high = config["PATHPREFIX"] + "DEA/Mix_high_VS_BaP_high",
+        Mix_high_VS_EE2_high = config["PATHPREFIX"] + "DEA/Mix_high_VS_EE2_high"
+    shell:
+        "cut -f1-6 {input.Mix_high} > {output.Mix_high_for_BaP_high} && "
+        "cut -f3-7 {input.BaP_high} > {output.BaP_high_for_Mix_high} && "
+        "cut -f1,3-7 {input.Mix_high} > {output.Mix_high_for_EE2_high} && " 
+        "cut -f3-7 {input.EE2_high} > {output.EE2_high_for_Mix_high} && "  
+        "sh ../script/remove_zero.sh {output.Mix_high_for_BaP_high} {output.BaP_high_for_Mix_high} > {output.Mix_high_VS_BaP_high} && " 
+        "sh ../script/remove_zero.sh {output.Mix_high_for_EE2_high} {output.EE2_high_for_Mix_high} > {output.Mix_high_VS_EE2_high}" 
+
+rule DEA:
+   input:
+       BaP_high = config["PATHPREFIX"] + "DEA/Mix_high_VS_BaP_high",
+       EE2_high = config["PATHPREFIX"] + "DEA/Mix_high_VS_EE2_high"
+   output:
+       deg_BaP_high = config["PATHPREFIX"] + "DEA/deg_Mix_high_VS_BaP_high.csv",
+       deg_EE2_high = config["PATHPREFIX"] + "DEA/deg_Mix_high_VS_EE2_high.csv"
+   shell:
+       "Rscript ../script/edgeR_test.R {input.BaP_high} {output.deg_BaP_high} && "
+       "Rscript ../script/edgeR_test.R {input.EE2_high} {output.deg_EE2_high}"
+

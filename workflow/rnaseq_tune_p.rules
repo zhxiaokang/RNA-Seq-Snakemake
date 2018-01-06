@@ -1,0 +1,19 @@
+configfile: "./configs/config_BaP-EE2_oldTrans.yaml"
+
+samples = list(range(1, 7))
+indexes = list(range(1, 9))
+groups = ['control', 'BaP_low', 'BaP_high', 'EE2_low', 'EE2_high', 'Mix_low', 'Mix_high']
+conditions = ['BaP_low', 'BaP_high', 'EE2_low', 'EE2_high', 'Mix_low', 'Mix_high']
+threds = [10, 25, 50]
+
+rule all:
+    input:
+        final = expand(config["PATHPREFIX"] + "DEA/p/deg_{condition}_deseq_0.15.list.txt", condition = conditions)
+rule extractDEG:
+   input:
+       dea = config["PATHPREFIX"] + "DEA/dea_{condition}"
+   output:
+       deg = config["PATHPREFIX"] + "DEA/p/deg_{condition}_deseq_0.15.list.txt"
+   shell:
+       "sh ../script/extractDEG_List.sh {input.dea} > {output.deg}"
+

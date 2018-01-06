@@ -4,139 +4,184 @@ samples = list(range(1, 7))
 indexes = list(range(1, 9))
 groups = ['control', 'BaP_low', 'BaP_high', 'EE2_low', 'EE2_high', 'Mix_low', 'Mix_high']
 conditions = ['BaP_low', 'BaP_high', 'EE2_low', 'EE2_high', 'Mix_low', 'Mix_high']
+threds = [10, 25, 50]
 
 rule all:
     input:
-        final = expand(config["PATHPREFIX"] + "DEA/deg_{condition}", condition = conditions)
+        # expand(config["PATHPREFIX"] + "DEA/deg_{condition}_edgeR", )
+        final = expand(config["PATHPREFIX"] + "DEA/deg_{condition}_edgeR", condition = conditions)
 
-rule indexTrans:
-    input:
-        trans = config["TRANS"]
-    output:
-        indexes = expand(config["PATHPREFIX"] + "indexes/index.{index}.ht2", index = indexes)
-    params:
-        index = config["PATHPREFIX"] + "indexes/index"
-    shell:
-        "hisat2-build -p {config[NCORE]} {input.trans} {params.index}"
-
-rule getReads:
-    input:
-        key = config["KEY"]
-    output:
-        forward = temp(config["PATHPREFIX"] + "reads/{sample}_forward.fastq.gz"),
-        reverse = temp(config["PATHPREFIX"] + "reads/{sample}_reverse.fastq.gz")
-    run:
-        shell("scp -i {input.key} {config[NELSIN]}/{wildcards.sample}_S*_R1_001.fastq.gz {output.forward}")
-        shell("scp -i {input.key} {config[NELSIN]}/{wildcards.sample}_S*_R2_001.fastq.gz {output.reverse}")
-
-rule alignment:
-    input:
-        index = expand(config["PATHPREFIX"] + "indexes/index.{index}.ht2", index = indexes),
-        forward = config["PATHPREFIX"] + "reads/{sample}_forward.fastq.gz",
-        reverse = config["PATHPREFIX"] + "reads/{sample}_reverse.fastq.gz"
-    output:
-        sam = config["PATHPREFIX"] + "samFile/{sample}.sam",
-        bam = config["PATHPREFIX"] + "bamFile/{sample}.bam"
-    wildcard_constraints:
-        sample = "\d+"
-    params:
-        index = config["PATHPREFIX"] + "indexes/index"
-    benchmark:
-        config["PATHPREFIX"] + "benchmarks/{sample}.hisat2.benchmark.txt"
-    shell:
-        "hisat2 -p {config[NCORE]} -x {params.index} -1 {input.forward} -2 {input.reverse} -S {output.sam}"
-        " && samtools view -b -S {output.sam} > {output.bam}"
-
-rule sortIndex:
-    input:
-        bam = config["PATHPREFIX"] + "bamFile/{sample}.bam"
-    output:
-        sort = config["PATHPREFIX"] + "bamFile/{sample}.sort.bam"
-    wildcard_constraints:
-        sample = "\d+"
-    shell:
-        "samtools sort {input.bam} -o {output.sort} && samtools index {output.sort}"
-
-rule featureCount:
-    input:
-        sort = config["PATHPREFIX"] + "bamFile/{sample}.sort.bam"
-    output:
-        count = config["PATHPREFIX"] + "countFile/{sample}.count"
-    wildcard_constraints:
-        sample = "\d+"
-    shell:
-        "samtools idxstats {input.sort} > {output.count}"
-
-rule mergeTransGene:
-    input:
-        transCount = config["PATHPREFIX"] + "countFile/{sample}.count"
-    output:
-        geneCount = config["PATHPREFIX"] + "countFile/{sample}.countmerged.idx"
-    wildcard_constraints:
-        sample = "\d+"
-    shell:
-        "cd ../script/ && javac -cp opencsv-1.8.jar:. sumgenescod.java && java -cp opencsv-1.8.jar:. sumgenescod codgenelist.csv ../workflow/{input}"
-
-# The rule below is not flexibal, needs to change manually, the used script combine.sh is only suitable for BaP_EE2
-rule combineSamples:
-    input:
-        geneCount = expand(config["PATHPREFIX"] + "countFile/{sample}.countmerged.idx", sample = samples)
-    output:
-        expand(config["PATHPREFIX"] + "countFile/{group}.countmerged.idx", group = groups)
-    params:
-        path = config["PATHPREFIX"] + "countFile"
-    shell:
-        "cp ../script/combine.sh {params.path} && cd {params.path} && bash combine.sh && rm combine.sh"
-
-rule prepareDEA:
-    input:
-        control = config["PATHPREFIX"] + "countFile/control.countmerged.idx",
-        BaP_low = config["PATHPREFIX"] + "countFile/BaP_low.countmerged.idx",
-        BaP_high = config["PATHPREFIX"] + "countFile/BaP_high.countmerged.idx",
-        EE2_low = config["PATHPREFIX"] + "countFile/EE2_low.countmerged.idx",
-        EE2_high = config["PATHPREFIX"] + "countFile/EE2_high.countmerged.idx",
-        Mix_low = config["PATHPREFIX"] + "countFile/Mix_low.countmerged.idx",
-        Mix_high = config["PATHPREFIX"] + "countFile/Mix_high.countmerged.idx"
-    output:
-        control_BaP_low = config["PATHPREFIX"] + "DEA/control_BaP_low",
-        control_BaP_high = config["PATHPREFIX"] + "DEA/control_BaP_high",
-        control_EE2_low = config["PATHPREFIX"] + "DEA/control_EE2_low",
-        control_EE2_high = config["PATHPREFIX"] + "DEA/control_EE2_high",
-        control_Mix_low = config["PATHPREFIX"] + "DEA/control_Mix_low",
-        control_Mix_high = config["PATHPREFIX"] + "DEA/control_Mix_high",
-        BaP_low_VS_control = config["PATHPREFIX"] + "DEA/BaP_low_VS_control",
-        BaP_high_VS_control = config["PATHPREFIX"] + "DEA/BaP_high_VS_control",
-        EE2_low_VS_control = config["PATHPREFIX"] + "DEA/EE2_low_VS_control",
-        EE2_high_VS_control = config["PATHPREFIX"] + "DEA/EE2_high_VS_control",
-        Mix_low_VS_control = config["PATHPREFIX"] + "DEA/Mix_low_VS_control",
-        Mix_high_VS_control = config["PATHPREFIX"] + "DEA/Mix_high_VS_control"
-    shell:
-        "cut -f2-7,9 {input.control} > {output.control_BaP_low} && "
-        "cut -f2-8 {input.control} > {output.control_BaP_high} && "
-        "cut -f2-5,7-9 {input.control} > {output.control_EE2_low} && " 
-        "cut -f2,4-7,9 {input.control} > {output.control_EE2_high} && " 
-        "cut -f3,5-9 {input.control} > {output.control_Mix_low} && " 
-        "cut -f3-7,9 {input.control} > {output.control_Mix_high} && " 
-        "sh ../script/remove_zero.sh {input.BaP_low} {output.control_BaP_low} > {output.BaP_low_VS_control} && " 
-        "sh ../script/remove_zero.sh {input.BaP_high} {output.control_BaP_high} > {output.BaP_high_VS_control} && " 
-        "sh ../script/remove_zero.sh {input.EE2_low} {output.control_BaP_high} > {output.EE2_low_VS_control} && " 
-        "sh ../script/remove_zero.sh {input.EE2_high} {output.control_EE2_high} > {output.EE2_high_VS_control} && " 
-        "sh ../script/remove_zero.sh {input.Mix_low} {output.control_Mix_low} > {output.Mix_low_VS_control} && " 
-        "sh ../script/remove_zero.sh {input.Mix_high} {output.control_Mix_high} > {output.Mix_high_VS_control}"
-
-rule DEA:
-   input:
-       config["PATHPREFIX"] + "DEA/{condition}_VS_control"
-   output:
-       config["PATHPREFIX"] + "DEA/dea_{condition}"
-   shell:
-       "Rscript ../script/DEA.R {input} {output}"
+# rule indexTrans:
+#     input:
+#         trans = config["TRANS"]
+#     output:
+#         indexes = expand(config["PATHPREFIX"] + "indexes/index.{index}.ht2", index = indexes)
+#     params:
+#         index = config["PATHPREFIX"] + "indexes/index"
+#     shell:
+#         "hisat2-build -p {config[NCORE]} {input.trans} {params.index}"
+# 
+# rule getReads:
+#     input:
+#         key = config["KEY"]
+#     output:
+#         forward = temp(config["PATHPREFIX"] + "reads/{sample}_forward.fastq.gz"),
+#         reverse = temp(config["PATHPREFIX"] + "reads/{sample}_reverse.fastq.gz")
+#     run:
+#         shell("scp -i {input.key} {config[NELSIN]}/{wildcards.sample}_S*_R1_001.fastq.gz {output.forward}")
+#         shell("scp -i {input.key} {config[NELSIN]}/{wildcards.sample}_S*_R2_001.fastq.gz {output.reverse}")
+# 
+# rule alignment:
+#     input:
+#         index = expand(config["PATHPREFIX"] + "indexes/index.{index}.ht2", index = indexes),
+#         forward = config["PATHPREFIX"] + "reads/{sample}_forward.fastq.gz",
+#         reverse = config["PATHPREFIX"] + "reads/{sample}_reverse.fastq.gz"
+#     output:
+#         sam = config["PATHPREFIX"] + "samFile/{sample}.sam",
+#         bam = config["PATHPREFIX"] + "bamFile/{sample}.bam"
+#     wildcard_constraints:
+#         sample = "\d+"
+#     params:
+#         index = config["PATHPREFIX"] + "indexes/index"
+#     benchmark:
+#         config["PATHPREFIX"] + "benchmarks/{sample}.hisat2.benchmark.txt"
+#     shell:
+#         "hisat2 -p {config[NCORE]} -x {params.index} -1 {input.forward} -2 {input.reverse} -S {output.sam}"
+#         " && samtools view -b -S {output.sam} > {output.bam}"
+# 
+# rule sortIndex:
+#     input:
+#         bam = config["PATHPREFIX"] + "bamFile/{sample}.bam"
+#     output:
+#         sort = config["PATHPREFIX"] + "bamFile/{sample}.sort.bam"
+#     wildcard_constraints:
+#         sample = "\d+"
+#     shell:
+#         "samtools sort {input.bam} -o {output.sort} && samtools index {output.sort}"
+# 
+# rule featureCount:
+#     input:
+#         sort = config["PATHPREFIX"] + "bamFile/{sample}.sort.bam"
+#     output:
+#         count = config["PATHPREFIX"] + "countFile/{sample}.count"
+#     wildcard_constraints:
+#         sample = "\d+"
+#     shell:
+#         "samtools idxstats {input.sort} > {output.count}"
+# 
+# rule mergeTransGene:
+#     input:
+#         transCount = config["PATHPREFIX"] + "countFile/{sample}.count"
+#     output:
+#         geneCount = config["PATHPREFIX"] + "countFile/{sample}.countmerged.idx"
+#     wildcard_constraints:
+#         sample = "\d+"
+#     shell:
+#         "cd ../script/ && javac -cp opencsv-1.8.jar:. sumgenescod.java && java -cp opencsv-1.8.jar:. sumgenescod codgenelist.csv ../workflow/{input}"
+# 
+# # The rule below is not flexibal, needs to change manually, the used script combine.sh is only suitable for BaP_EE2
+# rule combineSamples:
+#     input:
+#         geneCount = expand(config["PATHPREFIX"] + "countFile/{sample}.countmerged.idx", sample = samples)
+#     output:
+#         expand(config["PATHPREFIX"] + "countFile/{group}.countmerged.idx", group = groups)
+#     params:
+#         path = config["PATHPREFIX"] + "countFile"
+#     shell:
+#         "cp ../script/combine.sh {params.path} && cd {params.path} && bash combine.sh && rm combine.sh"
+# 
+# rule combineGroups:
+#     input:
+#         control = config["PATHPREFIX"] + "countFile/control.countmerged.idx",
+#         BaP_low = config["PATHPREFIX"] + "countFile/BaP_low.countmerged.idx",
+#         BaP_high = config["PATHPREFIX"] + "countFile/BaP_high.countmerged.idx",
+#         EE2_low = config["PATHPREFIX"] + "countFile/EE2_low.countmerged.idx",
+#         EE2_high = config["PATHPREFIX"] + "countFile/EE2_high.countmerged.idx",
+#         Mix_low = config["PATHPREFIX"] + "countFile/Mix_low.countmerged.idx",
+#         Mix_high = config["PATHPREFIX"] + "countFile/Mix_high.countmerged.idx"
+#     output:
+#         allGroups = config["PATHPREFIX"] + "countFile/all_groups"
+#     shell:
+#         "paste <(awk '{print $0}' {input.control}) <(cut -f 2- {input.BaP_low}) <(cut -f 2- {input.BaP_high}) && "
+#         "<(cut -f 2- {input.EE2_low}) <(cut -f 2- {input.EE2_high}) && "
+#         "<(cut -f 2- {input.Mix_low}) <(cut -f 2- {input.Mix_high}) > {output}"
+# 
+# rule filter:
+#     input:
+#         allGroups = config["PATHPREFIX"] + "countFile/all_groups"
+#     output:
+#         expand(config["PATHPREFIX"] + "countFile/all_groups_filter_{thred}", thred = threds)
+#     shell:
+#         "awk '{con=0; for(i=2; i<=9; i++) con += $i; && "
+#         "bap_low=0; for(i=10; i<=16; i++) bap_low += $i; bap_high=0; for(i=17; i<=23; i++) bap_high += $i; && "
+#         "ee2_low=0; for(i=24; i<=30; i++) ee2_low += $i; ee2_high=0; for(i=31; i<=36; i++) ee2_high += $i; && "
+#         "mix_low=0; for(i=37; i<=42; i++) mix_low += $i; mix_high=0; for(i=43; i<=48; i++) mix_high += $i;} && "
+#         "con >= {thred} || bap_low >= {thred} || bap_high >= {thred} || ee2_low >= {thred} || && "
+#         "ee2_high >= {thred} || mix_low >= {thred} || mix_high >= {thred} {print $0}' {input} > {output}"
+# 
+# # rule seperateGroups:
+# #     input:
+# #         config["PATHPREFIX"] + "countFile/all_groups_filter_{thred}"
+# #     output:
+# #         control = config["PATHPREFIX"] + "countFile/control.{thred}.count",
+# #         BaP_low = config["PATHPREFIX"] + "countFile/BaP_low.{thred}.count",
+# #         BaP_high = config["PATHPREFIX"] + "countFile/BaP_high.{thred}.count",
+# #         EE2_low = config["PATHPREFIX"] + "countFile/EE2_low.{thred}.count",
+# #         EE2_high = config["PATHPREFIX"] + "countFile/EE2_high.{thred}.count",
+# #         Mix_low = config["PATHPREFIX"] + "countFile/Mix_low.{thred}.count",
+# #         Mix_high = config["PATHPREFIX"] + "countFile/Mix_high.{thred}.count"
+# #     shell:
+#                
+# 
+# rule prepareDEA:
+#     input:
+#         control = config["PATHPREFIX"] + "countFile/control.countmerged.idx",
+#         BaP_low = config["PATHPREFIX"] + "countFile/BaP_low.countmerged.idx",
+#         BaP_high = config["PATHPREFIX"] + "countFile/BaP_high.countmerged.idx",
+#         EE2_low = config["PATHPREFIX"] + "countFile/EE2_low.countmerged.idx",
+#         EE2_high = config["PATHPREFIX"] + "countFile/EE2_high.countmerged.idx",
+#         Mix_low = config["PATHPREFIX"] + "countFile/Mix_low.countmerged.idx",
+#         Mix_high = config["PATHPREFIX"] + "countFile/Mix_high.countmerged.idx"
+#     output:
+#         control_BaP_low = config["PATHPREFIX"] + "DEA/control_BaP_low",
+#         control_BaP_high = config["PATHPREFIX"] + "DEA/control_BaP_high",
+#         control_EE2_low = config["PATHPREFIX"] + "DEA/control_EE2_low",
+#         control_EE2_high = config["PATHPREFIX"] + "DEA/control_EE2_high",
+#         control_Mix_low = config["PATHPREFIX"] + "DEA/control_Mix_low",
+#         control_Mix_high = config["PATHPREFIX"] + "DEA/control_Mix_high",
+#         BaP_low_VS_control = config["PATHPREFIX"] + "DEA/BaP_low_VS_control",
+#         BaP_high_VS_control = config["PATHPREFIX"] + "DEA/BaP_high_VS_control",
+#         EE2_low_VS_control = config["PATHPREFIX"] + "DEA/EE2_low_VS_control",
+#         EE2_high_VS_control = config["PATHPREFIX"] + "DEA/EE2_high_VS_control",
+#         Mix_low_VS_control = config["PATHPREFIX"] + "DEA/Mix_low_VS_control",
+#         Mix_high_VS_control = config["PATHPREFIX"] + "DEA/Mix_high_VS_control"
+#     shell:
+#         "cut -f2-7,9 {input.control} > {output.control_BaP_low} && "
+#         "cut -f2-8 {input.control} > {output.control_BaP_high} && "
+#         "cut -f2-5,7-9 {input.control} > {output.control_EE2_low} && " 
+#         "cut -f2,4-7,9 {input.control} > {output.control_EE2_high} && " 
+#         "cut -f3,5-9 {input.control} > {output.control_Mix_low} && " 
+#         "cut -f3-7,9 {input.control} > {output.control_Mix_high} && " 
+#         "sh ../script/remove_zero.sh {input.BaP_low} {output.control_BaP_low} > {output.BaP_low_VS_control} && " 
+#         "sh ../script/remove_zero.sh {input.BaP_high} {output.control_BaP_high} > {output.BaP_high_VS_control} && " 
+#         "sh ../script/remove_zero.sh {input.EE2_low} {output.control_BaP_high} > {output.EE2_low_VS_control} && " 
+#         "sh ../script/remove_zero.sh {input.EE2_high} {output.control_EE2_high} > {output.EE2_high_VS_control} && " 
+#         "sh ../script/remove_zero.sh {input.Mix_low} {output.control_Mix_low} > {output.Mix_low_VS_control} && " 
+#         "sh ../script/remove_zero.sh {input.Mix_high} {output.control_Mix_high} > {output.Mix_high_VS_control}"
+# 
+# rule DEA:
+#    input:
+#        config["PATHPREFIX"] + "DEA/{condition}_VS_control"
+#    output:
+#        config["PATHPREFIX"] + "DEA/dea_{condition}"
+#    shell:
+#        "Rscript ../script/DEA_edgeR.R {input} {output}"
 
 rule extractDEG:
    input:
        dea = config["PATHPREFIX"] + "DEA/dea_{condition}"
    output:
-       deg = config["PATHPREFIX"] + "DEA/deg_{condition}"
+       deg = config["PATHPREFIX"] + "DEA/deg_{condition}_edgeR"
    shell:
-       "sh ../script/extractDEG.sh {input.dea} > {output.deg}"
+       "sh ../script/DEA_edgeE.R {input.dea} > {output.deg}"
 

@@ -1,0 +1,43 @@
+for file in deg_Mix_high_deseq*.sort; do comm -23 $file deg_Mix_high_edgeR.list.txt.sort | wc -l ; done
+for file in deg_Mix_high_deseq*.sort; do comm -12 $file deg_Mix_high_edgeR.list.txt.sort | wc -l ; done
+for file in deg_Mix_high_deseq*.sort; do comm -13 $file deg_Mix_high_edgeR.list.txt.sort | wc -l ; done
+
+
+for file in deg_EE2_low_deseq*.sort
+do
+    if grep -Fxq ENSGMOG00000016012 $file
+    then
+            echo "yes"
+    else
+    		echo 'no'
+    fi
+done
+
+for file in deg_*_edgeR*.sort; do     echo $file; done
+
+for file in deg_*_edgeR*.sort; do     if grep -Fxq ENSGMOG00000016012 $file;     then             echo "yes";     else             echo 'no';     fi; done
+
+for file in deg_BaP_low_deseq*.sort; do     if grep -Fxq ENSGMOG00000016012 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_BaP_high_deseq*.sort; do     if grep -Fxq ENSGMOG00000016012 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_EE2_low_deseq*.sort; do     if grep -Fxq ENSGMOG00000016012 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_EE2_high_deseq*.sort; do     if grep -Fxq ENSGMOG00000016012 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_Mix_low_deseq*.sort; do     if grep -Fxq ENSGMOG00000016012 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_Mix_high_deseq*.sort; do     if grep -Fxq ENSGMOG00000016012 $file;     then             echo "yes";     else             echo 'no';     fi; done
+
+for file in deg_*_edgeR*.sort; do     if grep -Fxq ENSGMOG00000016347 $file;     then             echo "yes";     else             echo 'no';     fi; done
+
+for file in deg_BaP_low_deseq*.sort; do     if grep -Fxq ENSGMOG00000016347 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_BaP_high_deseq*.sort; do     if grep -Fxq ENSGMOG00000016347 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_EE2_low_deseq*.sort; do     if grep -Fxq ENSGMOG00000016347 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_EE2_high_deseq*.sort; do     if grep -Fxq ENSGMOG00000016347 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_Mix_low_deseq*.sort; do     if grep -Fxq ENSGMOG00000016347 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_Mix_high_deseq*.sort; do     if grep -Fxq ENSGMOG00000016347 $file;     then             echo "yes";     else             echo 'no';     fi; done
+
+for file in deg_*_edgeR*.sort; do     if grep -Fxq ENSGMOG00000016366 $file;     then             echo "yes";     else             echo 'no';     fi; done
+
+for file in deg_BaP_low_deseq*.sort; do     if grep -Fxq ENSGMOG00000016366 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_BaP_high_deseq*.sort; do     if grep -Fxq ENSGMOG00000016366 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_EE2_low_deseq*.sort; do     if grep -Fxq ENSGMOG00000016366 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_EE2_high_deseq*.sort; do     if grep -Fxq ENSGMOG00000016366 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_Mix_low_deseq*.sort; do     if grep -Fxq ENSGMOG00000016366 $file;     then             echo "yes";     else             echo 'no';     fi; done
+for file in deg_Mix_high_deseq*.sort; do     if grep -Fxq ENSGMOG00000016366 $file;     then             echo "yes";     else             echo 'no';     fi; done
