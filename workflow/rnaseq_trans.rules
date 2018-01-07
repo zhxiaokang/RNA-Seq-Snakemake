@@ -183,5 +183,5 @@ rule extractDEG:
    output:
        deg = config["PATHPREFIX"] + "DEA/deg_{condition}_edgeR"
    shell:
-       "sh ../script/DEA_edgeE.R {input.dea} > {output.deg}"
+       "sh ../script/DEA_edgeR.R {input.dea} > {output.deg}"
 
